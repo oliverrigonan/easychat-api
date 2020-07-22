@@ -24,6 +24,7 @@ namespace easychat_api.Api_Controllers
                                ChatId = d.ChatId,
                                UserId = d.UserId,
                                UserFullName = d.MstUser.FullName,
+                               UserName = d.MstUser.UserName,
                                Message = d.Message,
                                MessageDateTime = d.MessageDateTime.ToShortDateString(),
                                IsRead = d.IsRead,
@@ -122,6 +123,36 @@ namespace easychat_api.Api_Controllers
                 {
                     UserId = senderUser.FirstOrDefault().Id,
                     ChatId = newChatId,
+                    Message = objMessage.Message,
+                    MessageDateTime = DateTime.Now,
+                    IsRead = false,
+                    ReadDateTime = DateTime.Now
+                };
+
+                db.TrnMessages.InsertOnSubmit(newMessage);
+                db.SubmitChanges();
+
+                return Request.CreateResponse(HttpStatusCode.OK);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, ex.Message);
+            }
+        }
+
+        [HttpPost, Route("send/room/{chatId}")]
+        public HttpResponseMessage SendRoomMessage(String chatId, Api_Models.TrnMessageModel objMessage)
+        {
+            try
+            {
+                var senderUser = from d in db.MstUsers
+                                 where d.AspNetUserId == User.Identity.GetUserId()
+                                 select d;
+
+                Api_Data.TrnMessage newMessage = new Api_Data.TrnMessage()
+                {
+                    UserId = senderUser.FirstOrDefault().Id,
+                    ChatId = Convert.ToInt32(chatId),
                     Message = objMessage.Message,
                     MessageDateTime = DateTime.Now,
                     IsRead = false,

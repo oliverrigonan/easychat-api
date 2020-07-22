@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNet.Identity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -24,6 +25,21 @@ namespace easychat_api.Api_Controllers
                            };
 
             return userList.ToList();
+        }
+
+        [HttpGet, Route("detail")]
+        public Api_Models.MstUserModel UserDetail()
+        {
+            var user = from d in db.MstUsers
+                       where d.AspNetUserId == User.Identity.GetUserId()
+                       select new Api_Models.MstUserModel
+                       {
+                           Id = d.Id,
+                           UserName = d.UserName,
+                           FullName = d.FullName
+                       };
+
+            return user.FirstOrDefault();
         }
     }
 }

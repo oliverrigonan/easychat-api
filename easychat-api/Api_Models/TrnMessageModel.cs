@@ -11,6 +11,7 @@ namespace easychat_api.Api_Models
         public Int32? ChatId { get; set; }
         public Int32 UserId { get; set; }
         public String UserFullName { get; set; }
+        public String UserName { get; set; }
         public String Message { get; set; }
         public String MessageDateTime { get; set; }
         public Boolean IsRead { get; set; }

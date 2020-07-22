@@ -8,6 +8,7 @@ using System.Web.Http;
 
 namespace easychat_api.Api_Controllers
 {
+    //[RoutePrefix("api/chat")]
     [Authorize, RoutePrefix("api/chat")]
     public class ApiChatController : ApiController
     {
@@ -41,6 +42,8 @@ namespace easychat_api.Api_Controllers
                             Id = chats.FirstOrDefault().Id,
                             ChatDate = chats.FirstOrDefault().ChatDate.ToShortDateString(),
                             ChatName = userChat.MstUser1.FullName,
+                            ReceiverId = userChat.ReceiverUserId,
+                            ReceiverUserName = userChat.MstUser1.UserName,
                             CreatedByUserId = chats.FirstOrDefault().CreatedByUserId,
                             CreatedByUserFullName = chats.FirstOrDefault().MstUser.FullName
                         });
@@ -85,9 +88,56 @@ namespace easychat_api.Api_Controllers
                              select new Api_Models.TrnChatModel
                              {
                                  Id = d.Id,
+                                 ChatName = d.ChatName,
                                  ChatDate = d.ChatDate.ToShortDateString(),
                                  CreatedByUserId = d.CreatedByUserId,
                                  CreatedByUserFullName = d.MstUser.FullName
+                             };
+
+            return chatDetail.FirstOrDefault();
+        }
+
+        [HttpGet, Route("chat/{receiverUserName}")]
+        public Api_Models.TrnChatModel ChatIdFilterByUsername(String receiverUserName)
+        {
+            var senderUser = from d in db.MstUsers
+                             where d.AspNetUserId == User.Identity.GetUserId()
+                             select d;
+
+            var chatDetail = from d in db.MstUserChats
+                             where d.MstUser.UserName == senderUser.FirstOrDefault().UserName
+                             && d.MstUser1.UserName == receiverUserName
+                             select new Api_Models.TrnChatModel
+                             {
+                                 Id = d.TrnChat.Id,
+                                 ChatDate = d.TrnChat.ChatDate.ToShortDateString(),
+                                 CreatedByUserId = d.TrnChat.CreatedByUserId,
+                                 CreatedByUserFullName = d.TrnChat.MstUser.FullName
+                             };
+
+            return chatDetail.FirstOrDefault();
+        }
+
+        [HttpGet, Route("chat/detail/{receiverId}")]
+        public Api_Models.TrnChatModel ChatIdFilterByUserId(String receiverId)
+        {
+            var senderUser = from d in db.MstUsers
+                             where d.AspNetUserId == User.Identity.GetUserId()
+                             select d;
+
+            var reciverUser = from d in db.MstUsers
+                              where d.Id == Convert.ToInt32(receiverId)
+                              select d;
+
+            var chatDetail = from d in db.MstUserChats
+                             where d.MstUser.UserName == senderUser.FirstOrDefault().UserName
+                             && d.MstUser1.UserName == reciverUser.FirstOrDefault().UserName
+                             select new Api_Models.TrnChatModel
+                             {
+                                 Id = d.TrnChat.Id,
+                                 ChatDate = d.TrnChat.ChatDate.ToShortDateString(),
+                                 CreatedByUserId = d.TrnChat.CreatedByUserId,
+                                 CreatedByUserFullName = d.TrnChat.MstUser.FullName
                              };
 
             return chatDetail.FirstOrDefault();
@@ -137,8 +187,8 @@ namespace easychat_api.Api_Controllers
             return chatDetail.FirstOrDefault();
         }
 
-        [HttpPost, Route("createRoom")]
-        public HttpResponseMessage CreateRoom(Int32[] userIds)
+        [HttpPost, Route("createRoom/{roomName}")]
+        public HttpResponseMessage CreateRoom(Int32[] userIds, String roomName)
         {
             try
             {
@@ -160,6 +210,11 @@ namespace easychat_api.Api_Controllers
                         {
                             users += user.FirstOrDefault().FullName + " ";
                         }
+                    }
+
+                    if (!String.IsNullOrEmpty(roomName))
+                    {
+                        users = roomName;
                     }
 
                     Api_Data.TrnChat newChat = new Api_Data.TrnChat()
@@ -185,7 +240,7 @@ namespace easychat_api.Api_Controllers
                     db.MstUserGroupChats.InsertAllOnSubmit(newUserGroupChat);
                     db.SubmitChanges();
 
-                    return Request.CreateResponse(HttpStatusCode.OK);
+                    return Request.CreateResponse(HttpStatusCode.OK, newChat.Id);
                 }
                 else
                 {
