@@ -132,7 +132,13 @@ namespace easychat_api.Api_Controllers
                 db.TrnMessages.InsertOnSubmit(newMessage);
                 db.SubmitChanges();
 
-                return Request.CreateResponse(HttpStatusCode.OK);
+                if (Convert.ToInt32(chatId) == 0) {
+                    return Request.CreateResponse(HttpStatusCode.OK, newChatId);
+                }
+                else {
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
+
             }
             catch (Exception ex)
             {
